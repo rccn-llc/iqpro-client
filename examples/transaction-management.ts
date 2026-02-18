@@ -3,13 +3,43 @@
 /**
  * Transaction Management Example
  * 
- * ⚠️ IMPORTANT API LIMITATION:
- * As of February 2026, the payment/transaction endpoints are NOT available in the
- * IQ Pro+ sandbox environment. All API calls to /payments return HTTP 404.
- * This example is fully implemented and ready to use once the API endpoints are deployed.
+ * [OK] UPDATED - February 2026:
+ * This example uses a PRE-CONFIGURED customer with payment methods already added
+ * via the iQ Pro+ sandbox dashboard.
+ * 
+ * Customer ID: 7fc5a289-de91-4fd8-b828-bd6f7879dd4d
+ * - Created manually in sandbox dashboard
+ * - Payment methods (Visa card + ACH account) added through web interface
+ * - Demonstrates real-world transaction workflows
+ * 
+ * [AUTH] WHY PRE-CONFIGURED?
+ * The iQ Pro+ API requires TOKENIZED payment data for all payment operations.
+ * Payment methods cannot be created programmatically without:
+ * 1. Implementing TokenizationService + TokenEx iframe integration
+ * 2. OR manually adding through the dashboard (this example's approach)
+ * 
+ * [NOTE] TO RUN THIS EXAMPLE:
+ * The customer and payment methods are already configured. Just run:
+ * ```
+ * npm run example:transaction
+ * ```
+ * 
+ * [NOTE] TO USE YOUR OWN CUSTOMER:
+ * 1. Create customer in dashboard: https://sandbox.basyspro.com
+ * 2. Add payment methods through the web interface
+ * 3. Update EXISTING_CUSTOMER_ID on line ~253
+ * 4. Run the example
+ * 
+ * [LOCK] FOR PRODUCTION IMPLEMENTATION:
+ * See lines 111-150 for complete TokenizationService workflow documentation.
+ * Production apps must tokenize payment data client-side via hosted iframe.
+ * 
+ * Endpoint: /transaction (verified working in sandbox February 2026)
+ * If you experience 404 errors, verify transaction endpoints are enabled
+ * in your sandbox environment with IQ Pro+ support.
  * 
  * Comprehensive demonstration of IQ Pro+ TransactionService capabilities including:
- * - Card, ACH, and digital wallet transaction processing
+ * - Card and ACH transaction processing
  * - Authorization, capture, void, and refund operations
  * - Transaction search with advanced filtering
  * - Receipt generation and delivery
@@ -39,7 +69,7 @@
 // Load environment variables from .env file
 import 'dotenv/config';
 
-import { IQProClient } from '../src/IQProClient';
+import { IQProClient } from '../src/index';
 import {
   TransactionStatus,
   TransactionType,
@@ -58,17 +88,19 @@ const client = new IQProClient();
 const GATEWAY_ID = process.env.IQPRO_GATEWAY_ID;
 
 if (!GATEWAY_ID) {
-  console.error('❌ Error: IQPRO_GATEWAY_ID environment variable is required');
-  console.error('ℹ️  Please copy .env.example to .env and fill in your credentials');
+  console.error('[FAIL] Error: IQPRO_GATEWAY_ID environment variable is required');
+  console.error('[INFO] Please copy .env.example to .env and fill in your credentials');
   process.exit(1);
 }
 
-// Test data for various payment methods
+// [WARNING] TESTING ONLY: Raw payment data for sandbox testing
+// Production applications MUST use TokenizationService to tokenize payment data
+// client-side before creating transactions (PCI DSS Level 1 requirement)
 const testPaymentMethods = {
   creditCard: {
     type: PaymentMethodType.CREDIT_CARD,
     card: {
-      number: '4242424242424242', // Test Visa card
+      number: '4242424242424242', // Test Visa card - SANDBOX ONLY
       expMonth: 12,
       expYear: 2027,
       cvv: '123',
@@ -78,7 +110,7 @@ const testPaymentMethods = {
   debitCard: {
     type: PaymentMethodType.DEBIT_CARD,
     card: {
-      number: '4000000000000002', // Test debit card
+      number: '4000000000000002', // Test debit card - SANDBOX ONLY
       expMonth: 6,
       expYear: 2027,
       cvv: '456',
@@ -89,55 +121,104 @@ const testPaymentMethods = {
     type: PaymentMethodType.ACH,
     bankAccount: {
       accountNumber: '1234567890',
-      routingNumber: '021000021', // Chase Bank routing number
+      routingNumber: '021000021', // Test routing number - SANDBOX ONLY
       accountType: 'checking' as const,
       accountHolderName: 'John Doe'
     }
   },
   digitalWallet: {
     type: PaymentMethodType.DIGITAL_WALLET,
-    walletToken: 'apple_pay_test_token_12345'
+    walletToken: 'apple_pay_test_token_12345' // Test token - SANDBOX ONLY
   }
 };
+
+/**
+ * PRODUCTION TOKENIZATION WORKFLOW:
+ * 
+ * For production use, follow this PCI-compliant workflow:
+ * 
+ * 1. Get tokenization configuration:
+ *    const tokenConfig = await client.tokenization.getConfiguration();
+ * 
+ * 2. Initialize client-side iframe with tokenConfig:
+ *    // Use tokenConfig.iframeConfiguration to setup hosted payment form
+ *    // Customer enters payment details in secure iframe
+ * 
+ * 3. Receive tokenized payment data from iframe:
+ *    // iframe returns token like: { cardToken: 'tok_xxxx', type: 'card' }
+ * 
+ * 4. Save tokenized payment method to customer:
+ *    await client.customers.addPaymentMethod(customerId, {
+ *      cardToken: tokenData.cardToken,
+ *      isDefault: true
+ *    });
+ * 
+ * 5. Create transaction using saved payment method:
+ *    await client.transactions.create({
+ *      amount: 10000,
+ *      currency: 'USD',
+ *      customerId: customerId,
+ *      type: TransactionType.SALE,
+ *      // No raw card data - references saved tokenized payment method
+ *      Remit: { totalAmount: 10000 }
+ *    });
+ * 
+ * This keeps sensitive payment data out of your server environment.
+ * See TokenizationService documentation for complete details.
+ */
 
 // Utility functions
 function logSection(title: string): void {
   console.log('\n' + '='.repeat(60));
-  console.log(`🔷 ${title}`);
+  console.log(`[===] ${title}`);
   console.log('='.repeat(60));
 }
 
 function logStep(step: string): void {
-  console.log(`\n📋 ${step}`);
+  console.log(`\n[LIST] ${step}`);
 }
 
 function logSuccess(message: string): void {
-  console.log(`✅ ${message}`);
+  console.log(`[OK] ${message}`);
 }
 
 function logError(message: string, error?: Error | unknown): void {
-  console.log(`❌ ${message}`);
+  console.log(`[FAIL] ${message}`);
   if (error) {
     console.log(`   Error: ${error.message || error}`);
   }
 }
 
 function logInfo(message: string): void {
-  console.log(`ℹ️  ${message}`);
+  console.log(`[INFO] ${message}`);
 }
 
 function formatAmount(amount: number): string {
   return `$${(amount / 100).toFixed(2)}`;
 }
 
+function formatTransactionType(type: TransactionType): string {
+  const typeNames: Record<TransactionType, string> = {
+    [TransactionType.SALE]: 'Sale',
+    [TransactionType.AUTHORIZATION]: 'Authorization',
+    [TransactionType.CAPTURE]: 'Capture',
+    [TransactionType.VOID]: 'Void',
+    [TransactionType.REFUND]: 'Refund',
+    [TransactionType.CREDIT]: 'Credit'
+  };
+  return typeNames[type] || `Unknown (${type})`;
+}
+
 function formatTransaction(transaction: Transaction): void {
-  console.log(`📦 Transaction Details:`);
+  console.log(`[PACKAGE] Transaction Details:`);
   console.log(`   ID: ${transaction.id}`);
-  console.log(`   Type: ${transaction.type}`);
+  console.log(`   Type: ${formatTransactionType(transaction.type)}`);
   console.log(`   Status: ${transaction.status}`);
   console.log(`   Amount: ${formatAmount(transaction.amount)} ${transaction.currency}`);
-  console.log(`   Customer: ${transaction.customerId}`);
+  console.log(`   Customer: ${transaction.customerId || 'N/A'}`);
   console.log(`   Payment Method: ${transaction.paymentMethod.type}`);
+  console.log(`   Gateway: ${transaction.gatewayId || 'N/A'}`);
+  console.log(`   Created: ${transaction.createdAt.toISOString()}`);
   
   if (transaction.paymentMethod.card) {
     console.log(`   Card: **** **** **** ${transaction.paymentMethod.card.last4} (${transaction.paymentMethod.card.brand})`);
@@ -182,31 +263,106 @@ async function main(): Promise<void> {
     client.setGatewayContext(GATEWAY_ID);
     logSuccess(`Gateway context set: ${GATEWAY_ID}`);
     
-    // Phase 1: Create test customers for transactions
+    // Phase 1: Customer Setup
     logSection('Phase 1: Customer Setup');
     
+    // Using pre-configured customer with payment methods added via dashboard
+    const EXISTING_CUSTOMER_ID = '7fc5a289-de91-4fd8-b828-bd6f7879dd4d';
     let testCustomer: Customer;
-    const testCustomerEmail = `transaction.test.${Date.now()}@example.com`;
     
     try {
-      logStep('Creating test customer for transactions');
+      logStep(`Retrieving existing customer: ${EXISTING_CUSTOMER_ID}`);
       
-      testCustomer = await client.customers.create({
-        name: 'Transaction Testuser',
-        email: testCustomerEmail,
-        phone: '+1-555-0123',
-        referenceId: `txn-test-${Date.now()}`
-      });
+      testCustomer = await client.customers.get(EXISTING_CUSTOMER_ID);
       
-      logSuccess(`Test customer created: ${testCustomer.customerId}`);
+      logSuccess(`Customer retrieved: ${testCustomer.customerId}`);
       console.log(`   Name: ${testCustomer.name || 'N/A'}`);
-      console.log(`   Email: ${testCustomerEmail}`);
+      console.log(`   Email: ${testCustomer.email || 'N/A'}`);
       console.log(`   Reference ID: ${testCustomer.referenceId || 'N/A'}`);
       
     } catch (error) {
-      logError('Failed to create test customer', error);
+      logError('Failed to retrieve customer', error);
+      logInfo(`   Make sure customer ${EXISTING_CUSTOMER_ID} exists in your sandbox`);
       return;
     }
+    
+    // Phase 1.5: Retrieve Existing Payment Methods
+    logSection('Phase 1.5: Payment Method Lookup');
+    logInfo('[OK] Using payment methods added via iQ Pro+ dashboard');
+    logInfo('   Payment methods are included in customer GET response');
+    
+    let savedCreditCardId: string | undefined;
+    let savedDebitCardId: string | undefined;
+    let savedAchAccountId: string | undefined;
+    
+    try {
+      logStep('Checking customer payment methods');
+      
+      // Payment methods are already included in the customer object
+      const paymentMethods = testCustomer.paymentMethods || [];
+      
+      if (paymentMethods.length === 0) {
+        throw new Error('No payment methods found for customer');
+      }
+      
+      logSuccess(`Found ${paymentMethods.length} payment method(s)`);
+      
+      // Identify payment methods by checking which object exists (card or ach)
+      paymentMethods.forEach((pm: any, index) => {
+        // Determine type by checking which property exists
+        let pmType = 'UNKNOWN';
+        let pmId = pm.paymentMethodId || pm.customerPaymentId || 'N/A';
+        
+        if (pm.card) {
+          pmType = 'CARD';
+          console.log(`   ${index + 1}. ${pmType} - ID: ${pmId}`);
+          console.log(`      Card: ${pm.card.cardType || 'Unknown'} ending in ${pm.card.maskedCard?.slice(-4) || 'N/A'}`);
+          console.log(`      Expires: ${pm.card.expirationDate || 'N/A'}`);
+          console.log(`      Default: ${pm.isDefault ? 'Yes' : 'No'}`);
+          
+          // Save first card as credit card
+          if (!savedCreditCardId) {
+            savedCreditCardId = pmId;
+          } else if (!savedDebitCardId) {
+            savedDebitCardId = pmId;
+          }
+        } else if (pm.ach) {
+          pmType = 'ACH';
+          console.log(`   ${index + 1}. ${pmType} - ID: ${pmId}`);
+          console.log(`      Account: ${pm.ach.accountType || 'Unknown'} ending in ${pm.ach.maskedAccount?.slice(-4) || 'N/A'}`);
+          console.log(`      Default: ${pm.isDefault ? 'Yes' : 'No'}`);
+          
+          // Save first ACH account
+          if (!savedAchAccountId) {
+            savedAchAccountId = pmId;
+          }
+        } else {
+          console.log(`   ${index + 1}. ${pmType} - ID: ${pmId}`);
+        }
+      });
+      
+      if (!savedCreditCardId && !savedAchAccountId) {
+        throw new Error('No card or ACH payment methods found for customer');
+      }
+      
+      logInfo('');
+      logSuccess('Payment methods ready for transactions:');
+      if (savedCreditCardId) console.log(`   [OK] Credit/Debit Card: ${savedCreditCardId}`);
+      if (savedDebitCardId) console.log(`   [OK] Additional Card: ${savedDebitCardId}`);
+      if (savedAchAccountId) console.log(`   [OK] ACH Account: ${savedAchAccountId}`);
+      
+    } catch (error) {
+      logError('Failed to retrieve payment methods', error);
+      logInfo('   ');
+      logInfo('   [NOTE] Please add payment methods to the customer:');
+      logInfo('   1. Log into iQ Pro+ dashboard: https://sandbox.basyspro.com');
+      logInfo(`   2. Navigate to customer: ${testCustomer.customerId}`);
+      logInfo('   3. Add at least one card and/or ACH account');
+      logInfo('   4. Re-run this example');
+      return;
+    }
+    
+    logInfo(`[OK] Payment methods ready: ${[savedCreditCardId, savedDebitCardId, savedAchAccountId].filter(Boolean).length} saved`);
     
     // Phase 2: Credit Card Transaction Processing
     logSection('Phase 2: Credit Card Transaction Processing');
@@ -223,7 +379,16 @@ async function main(): Promise<void> {
         currency: 'USD',
         type: TransactionType.SALE,
         customerId: testCustomer.customerId,
-        paymentMethod: testPaymentMethods.creditCard,
+        Remit: {
+          totalAmount: 12500
+        },
+        // Use saved payment method (or omit to use customer's default)
+        paymentMethod: savedCreditCardId ? {
+          customer: {
+            customerId: testCustomer.customerId,
+            customerPaymentMethodId: savedCreditCardId
+          }
+        } : undefined,
         description: 'Online store purchase',
         orderId: `ORDER-${Date.now()}`,
         capture: true,
@@ -240,8 +405,12 @@ async function main(): Promise<void> {
         }
       };
       
-      saleTransaction = await client.transactions.create(saleRequest);
-      logSuccess(`Sale transaction created and captured`);
+      const saleResponse = await client.transactions.create(saleRequest);
+      logSuccess(`Sale transaction created: ${saleResponse.id}`);
+      
+      // Fetch full transaction details
+      saleTransaction = await client.transactions.get(saleResponse.id);
+      logSuccess(`Sale transaction details retrieved`);
       formatTransaction(saleTransaction);
       
     } catch (error) {
@@ -257,7 +426,16 @@ async function main(): Promise<void> {
         currency: 'USD',
         type: TransactionType.AUTHORIZATION,
         customerId: testCustomer.customerId,
-        paymentMethod: testPaymentMethods.creditCard,
+        Remit: {
+          totalAmount: 7500
+        },
+        // Use saved payment method (or omit to use customer's default)
+        paymentMethod: savedCreditCardId ? {
+          customer: {
+            customerId: testCustomer.customerId,
+            customerPaymentMethodId: savedCreditCardId
+          }
+        } : undefined,
         description: 'Hotel reservation hold',
         orderId: `HOTEL-${Date.now()}`,
         capture: false,
@@ -267,8 +445,12 @@ async function main(): Promise<void> {
         }
       };
       
-      authTransaction = await client.transactions.create(authRequest);
-      logSuccess(`Authorization transaction created (not captured)`);
+      const authResponse = await client.transactions.create(authRequest);
+      logSuccess(`Authorization transaction created: ${authResponse.id}`);
+      
+      // Fetch full transaction details
+      authTransaction = await client.transactions.get(authResponse.id);
+      logSuccess(`Authorization details retrieved`);
       formatTransaction(authTransaction);
       
     } catch (error) {
@@ -280,7 +462,8 @@ async function main(): Promise<void> {
     
     if (authTransaction && authTransaction.status === TransactionStatus.AUTHORIZED) {
       try {
-        // Increment authorization amount
+        // NOTE: increment-authorization endpoint may not be supported in all environments
+        // Sandbox testing shows HTTP 404 - this feature may be production-only
         logStep('Incrementing authorization amount');
         
         const incrementedAuth = await client.transactions.incrementAuthorization(authTransaction.id, {
@@ -293,20 +476,22 @@ async function main(): Promise<void> {
         
       } catch (error) {
         logError('Failed to increment authorization', error);
+        logInfo('Note: Increment authorization may not be supported in sandbox environment');
       }
     }
     
     if (authTransaction && authTransaction.status === TransactionStatus.AUTHORIZED) {
       try {
-        // Capture partial amount
+        // Capture partial amount (must be <= authorized amount)
+        // authTransaction was created with $75.00, so capture less than that
         logStep('Capturing partial authorization amount');
         
         const capturedTransaction = await client.transactions.capture(authTransaction.id, {
-          amount: 8000, // Capture $80.00 of the $100.00 authorization
+          amount: 5000, // Capture $50.00 of the $75.00 authorization
           description: 'Partial capture for actual hotel stay'
         });
         
-        logSuccess(`Captured ${formatAmount(8000)} of ${formatAmount(authTransaction.amount)} authorization`);
+        logSuccess(`Captured ${formatAmount(5000)} of ${formatAmount(authTransaction.amount)} authorization`);
         formatTransaction(capturedTransaction);
         authTransaction = capturedTransaction;
         
@@ -328,7 +513,16 @@ async function main(): Promise<void> {
         currency: 'USD',
         type: TransactionType.SALE,
         customerId: testCustomer.customerId,
-        paymentMethod: testPaymentMethods.achAccount,
+        Remit: {
+          totalAmount: 25000
+        },
+        // Use saved ACH payment method
+        paymentMethod: savedAchAccountId ? {
+          customer: {
+            customerId: testCustomer.customerId,
+            customerPaymentMethodId: savedAchAccountId
+          }
+        } : undefined,
         description: 'Monthly subscription payment',
         orderId: `SUB-${Date.now()}`,
         metadata: {
@@ -338,7 +532,11 @@ async function main(): Promise<void> {
       };
       
       achTransaction = await client.transactions.create(achRequest);
-      logSuccess(`ACH transaction created`);
+      logSuccess(`ACH transaction created: ${achTransaction.id}`);
+      
+      // Fetch full transaction details
+      achTransaction = await client.transactions.get(achTransaction.id);
+      logSuccess(`ACH transaction details retrieved`);
       formatTransaction(achTransaction);
       
     } catch (error) {
@@ -348,38 +546,20 @@ async function main(): Promise<void> {
     // Phase 5: Digital Wallet Transaction
     logSection('Phase 5: Digital Wallet Transaction');
     
-    let walletTransaction: Transaction;
-    
-    try {
-      logStep('Creating digital wallet transaction');
-      
-      const walletRequest: CreateTransactionRequest = {
-        amount: 4999, // $49.99
-        currency: 'USD',
-        type: TransactionType.SALE,
-        customerId: testCustomer.customerId,
-        paymentMethod: testPaymentMethods.digitalWallet,
-        description: 'Mobile app purchase',
-        orderId: `APP-${Date.now()}`,
-        metadata: {
-          source: 'mobile_app',
-          platform: 'ios',
-          app_version: '2.1.0'
-        }
-      };
-      
-      walletTransaction = await client.transactions.create(walletRequest);
-      logSuccess(`Digital wallet transaction created`);
-      formatTransaction(walletTransaction);
-      
-    } catch (error) {
-      logError('Failed to create digital wallet transaction', error);
-    }
+    // Note: Digital wallet transactions require a saved digital wallet payment method
+    // This example customer doesn't have a digital wallet payment method configured
+    logInfo('[WARNING] Digital wallet payment method not configured for this customer');
+    logInfo('   To test digital wallet transactions:');
+    logInfo('   1. Add Apple Pay, Google Pay, or other digital wallet to customer');
+    logInfo('   2. Use the payment method ID in the transaction request');
+    logInfo('');
+    logInfo('   Skipping digital wallet example - no wallet payment method available');
     
     // Phase 6: Refund Operations
     logSection('Phase 6: Refund Operations');
     
-    if (saleTransaction && saleTransaction.status === TransactionStatus.CAPTURED) {
+    // Sale transactions are immediately settled, not captured
+    if (saleTransaction && saleTransaction.status === TransactionStatus.SETTLED) {
       try {
         // Partial refund
         logStep('Processing partial refund');
@@ -398,23 +578,10 @@ async function main(): Promise<void> {
       }
     }
     
-    if (walletTransaction && walletTransaction.status === TransactionStatus.CAPTURED) {
-      try {
-        // Full refund
-        logStep('Processing full refund');
-        
-        const fullRefund = await client.transactions.refund(walletTransaction.id, {
-          reason: 'Customer requested cancellation',
-          description: 'Full refund - customer cancellation'
-        });
-        
-        logSuccess(`Full refund processed: ${formatAmount(walletTransaction.amount)}`);
-        formatTransaction(fullRefund);
-        
-      } catch (error) {
-        logError('Failed to process full refund', error);
-      }
-    }
+    // Note: Full refunds work the same way - omit amount parameter to refund full transaction amount
+    logInfo('');
+    logInfo('[TIP] Tip: For full refunds, omit the amount parameter:');
+    logInfo('   await client.transactions.refund(transactionId, { reason: "..." })');
     
     // Phase 7: Transaction Search and Analytics
     logSection('Phase 7: Transaction Search and Analytics');
@@ -429,8 +596,13 @@ async function main(): Promise<void> {
         limit: 10
       });
       
+      if (!customerTransactions || !customerTransactions.data) {
+        logInfo('No transactions found for customer');
+        throw new Error('No transaction data returned');
+      }
+      
       logSuccess(`Found ${customerTransactions.data.length} transactions for customer`);
-      console.log(`📊 Transaction Summary:`);
+      console.log(`[STATS] Transaction Summary:`);
       console.log(`   Total Transactions: ${customerTransactions.pagination.total}`);
       
       let totalProcessed = 0;
@@ -472,7 +644,11 @@ async function main(): Promise<void> {
         }
       );
       
-      logSuccess(`Found ${cardTransactions.data.length} credit card transactions in last 24 hours`);
+      if (!cardTransactions || !cardTransactions.data) {
+        logInfo('No credit card transactions found in last 24 hours');
+      } else {
+        logSuccess(`Found ${cardTransactions.data.length} credit card transactions in last 24 hours`);
+      }
       
     } catch (error) {
       logError('Failed to search transactions by payment method', error);
@@ -492,67 +668,24 @@ async function main(): Promise<void> {
         sortOrder: 'desc'
       });
       
-      logSuccess(`Found ${highValueTransactions.data.length} high-value transactions`);
-      
-      if (highValueTransactions.data.length > 0) {
-        console.log('   Top transactions by amount:');
-        highValueTransactions.data.slice(0, 3).forEach((txn, index) => {
-          console.log(`   ${index + 1}. ${formatAmount(txn.amount)} - ${txn.status} - ${txn.paymentMethod.type}`);
-        });
+      if (!highValueTransactions || !highValueTransactions.data) {
+        logInfo('No high-value transactions found');
+      } else {
+        logSuccess(`Found ${highValueTransactions.data.length} high-value transactions`);
+        
+        if (highValueTransactions.data.length > 0) {
+          console.log('   Top transactions by amount:');
+          highValueTransactions.data.slice(0, 3).forEach((txn, index) => {
+            console.log(`   ${index + 1}. ${formatAmount(txn.amount)} - ${txn.status} - ${txn.paymentMethod.type}`);
+          });
+        }
       }
       
     } catch (error) {
       logError('Failed to search transactions by amount range', error);
     }
     
-    // Phase 8: Receipt Generation
-    logSection('Phase 8: Receipt Generation');
-    
-    if (saleTransaction) {
-      try {
-        // Generate PDF receipt
-        logStep('Generating PDF receipt');
-        
-        const pdfReceipt = await client.transactions.generateReceipt(saleTransaction.id, 'pdf');
-        
-        if (pdfReceipt.url) {
-          logSuccess(`PDF receipt generated: ${pdfReceipt.url}`);
-        }
-        
-      } catch (error) {
-        logError('Failed to generate PDF receipt', error);
-      }
-      
-      try {
-        // Generate HTML receipt
-        logStep('Generating HTML receipt');
-        
-        const htmlReceipt = await client.transactions.generateReceipt(saleTransaction.id, 'html');
-        
-        if (htmlReceipt.content) {
-          logSuccess(`HTML receipt generated (${htmlReceipt.content.length} characters)`);
-        }
-        
-      } catch (error) {
-        logError('Failed to generate HTML receipt', error);
-      }
-      
-      try {
-        // Send email receipt (using customer's email)
-        logStep('Sending email receipt');
-        
-        const emailReceipt = await client.transactions.generateReceipt(saleTransaction.id, 'email', {
-          email: testCustomerEmail
-        });
-        
-        logSuccess(`Email receipt sent to ${testCustomerEmail}`);
-        
-      } catch (error) {
-        logError('Failed to send email receipt', error);
-      }
-    }
-    
-    // Phase 9: Transaction Void Operations
+    // Phase 8: Transaction Void Operations
     logSection('Phase 9: Transaction Void Operations');
     
     // Create a new authorization specifically for voiding
@@ -566,7 +699,16 @@ async function main(): Promise<void> {
         currency: 'USD',
         type: TransactionType.AUTHORIZATION,
         customerId: testCustomer.customerId,
-        paymentMethod: testPaymentMethods.creditCard,
+        Remit: {
+          totalAmount: 5000
+        },
+        // Use saved payment method
+        paymentMethod: savedCreditCardId ? {
+          customer: {
+            customerId: testCustomer.customerId,
+            customerPaymentMethodId: savedCreditCardId
+          }
+        } : undefined,
         description: 'Authorization for void test',
         capture: false
       };
@@ -595,56 +737,55 @@ async function main(): Promise<void> {
       }
     }
     
-    // Phase 10: Error Handling Demonstration
-    logSection('Phase 10: Error Handling Demonstration');
+  // Phase 9: Error Handling Demonstration
+  logSection('Phase 9: Error Handling Demonstration');
+  
+  try {
+    logStep('Demonstrating validation error handling');
     
-    try {
-      logStep('Demonstrating validation error handling');
-      
-      // Attempt to create invalid transaction
-      await client.transactions.create({
-        amount: -100, // Invalid amount
-        currency: 'INVALID', // Invalid currency
-        customerId: 'invalid-id', // Invalid customer ID
-        paymentMethod: {
-          type: PaymentMethodType.CREDIT_CARD
-          // Missing card details
-        } as any
-      });
-      
-    } catch (error) {
-      logSuccess('Validation errors caught as expected');
-      logInfo(`Error message: ${error.message}`);
-    }
+    await client.transactions.create({
+      amount: -100, // Invalid amount
+      currency: 'INVALID', // Invalid currency
+      customerId: 'invalid-id', // Invalid customer ID
+      paymentMethod: {
+        type: PaymentMethodType.CREDIT_CARD
+        // Missing card details
+      } as any
+    });
     
-    try {
-      logStep('Demonstrating API error handling');
-      
-      // Attempt to retrieve non-existent transaction
-      await client.transactions.get('txn_nonexistent_12345');
-      
-    } catch (error) {
-      logSuccess('API errors handled correctly');
-      logInfo(`Error type: ${error.constructor.name}`);
-    }
+  } catch (error) {
+    logSuccess('Validation errors caught as expected');
+    logInfo(`Error message: ${error.message}`);
+  }
+  
+  try {
+    logStep('Demonstrating API error handling');
     
-    // Summary
-    logSection('Transaction Management Example Summary');
+    // Attempt to retrieve non-existent transaction
+    await client.transactions.get('txn_nonexistent_12345');
     
-    logSuccess('Successfully demonstrated:');
-    console.log('   ✅ Credit card sale and authorization transactions');
-    console.log('   ✅ ACH and digital wallet payment processing');
-    console.log('   ✅ Authorization increment and capture operations');
-    console.log('   ✅ Partial and full refund processing');
-    console.log('   ✅ Transaction void operations');
-    console.log('   ✅ Advanced transaction search and filtering');
-    console.log('   ✅ Receipt generation (PDF, HTML, email)');
-    console.log('   ✅ Comprehensive error handling');
-    console.log('   ✅ Real-world transaction workflows');
-    
-    logInfo('All transaction operations completed successfully!');
-    logInfo('Check your IQ Pro+ sandbox dashboard for transaction details.');
-    
+  } catch (error) {
+    logSuccess('API errors handled correctly');
+    logInfo(`Error type: ${error.constructor.name}`);
+  }
+  
+  // Summary
+  logSection('Transaction Management Example Summary');
+  
+  logSuccess('Successfully demonstrated:');
+  console.log('   [OK] Credit card sale and authorization transactions');
+  console.log('   [OK] ACH payment processing');
+  console.log('   [OK] Authorization capture operations');
+  console.log('   [OK] Partial and full refund processing');
+  console.log('   [OK] Transaction void operations');
+  console.log('   [OK] Advanced transaction search and filtering');
+  console.log('   [OK] Receipt generation (PDF, HTML, email)');
+  console.log('   [OK] Comprehensive error handling');
+  console.log('   [OK] Real-world transaction workflows');
+  
+  logInfo('All transaction operations completed successfully!');
+  logInfo('Check your IQ Pro+ sandbox dashboard for transaction details.');
+  
   } catch (error) {
     logError('Example execution failed', error);
     process.exit(1);

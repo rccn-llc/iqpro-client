@@ -342,6 +342,69 @@ describe('CustomerService', () => {
         );
       });
     });
+
+    describe('listPaymentMethods', () => {
+      const mockPaymentMethods = [
+        {
+          customerPaymentId: '770e8400-e29b-41d4-a716-446655440000',
+          type: 'card' as const,
+          isDefault: true,
+          last4: '4444',
+          cardBrand: 'Visa',
+          createdDateTime: '2026-02-13T09:45:29.762Z',
+          modifiedDateTime: '2026-02-13T09:45:29.762Z'
+        },
+        {
+          customerPaymentId: '880e8400-e29b-41d4-a716-446655440001',
+          type: 'ach' as const,
+          isDefault: false,
+          last4: '5678',
+          createdDateTime: '2026-02-14T10:15:00.000Z',
+          modifiedDateTime: '2026-02-14T10:15:00.000Z'
+        }
+      ];
+
+      const mockListResponse = {
+        statusCode: 'OK',
+        statusDetails: ['Payment methods retrieved successfully'],
+        data: mockPaymentMethods
+      };
+
+      beforeEach(() => {
+        mockApiClient.get = vi.fn().mockResolvedValue(mockListResponse);
+      });
+
+      it('should list all payment methods for customer', async () => {
+        const paymentMethods = await customerService.listPaymentMethods(customerId);
+
+        expect(mockApiClient.get).toHaveBeenCalledWith(
+          '/api/gateway/test-gateway-123/customer/' + customerId + '/payment'
+        );
+        expect(paymentMethods).toHaveLength(2);
+        expect(paymentMethods[0].customerPaymentId).toBe('770e8400-e29b-41d4-a716-446655440000');
+        expect(paymentMethods[0].type).toBe('card');
+        expect(paymentMethods[1].type).toBe('ach');
+      });
+
+      it('should return empty array when customer has no payment methods', async () => {
+        mockApiClient.get = vi.fn().mockResolvedValue({
+          statusCode: 'OK',
+          statusDetails: ['No payment methods found'],
+          data: []
+        });
+
+        const paymentMethods = await customerService.listPaymentMethods(customerId);
+
+        expect(paymentMethods).toHaveLength(0);
+        expect(paymentMethods).toEqual([]);
+      });
+
+      it('should validate customer ID format', async () => {
+        await expect(
+          customerService.listPaymentMethods('invalid-uuid')
+        ).rejects.toThrow('Customer ID must be a valid UUID');
+      });
+    });
   });
 
   describe('generatePayableToken', () => {
