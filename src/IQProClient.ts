@@ -6,10 +6,11 @@ import { ApiClient } from './lib/ApiClient';
 import { CustomerService } from './services/CustomerService';
 import { SubscriptionService } from './services/SubscriptionService';
 import { TransactionService } from './services/TransactionService';
+import { TokenizationService } from './services/TokenizationService';
 import type { IQProConfig } from './types/Config';
 import type { RequestOptions, HttpMethod } from './lib/ApiClient';
 import type { GatewayContext } from './types/Common';
-import { IQProError, AuthenticationError } from './lib/errors';
+import { AuthenticationError } from './lib/errors';
 
 /**
  * Main IQ Pro+ Client for OAuth 2.0 authenticated API interactions
@@ -55,6 +56,7 @@ export class IQProClient {
   public readonly customers: CustomerService;
   public readonly subscriptions: SubscriptionService;
   public readonly transactions: TransactionService;
+  public readonly tokenization: TokenizationService;
 
   /**
    * Initialize IQ Pro+ Client with OAuth 2.0 authentication
@@ -77,6 +79,7 @@ export class IQProClient {
     this.customers = new CustomerService(this.apiClient, this.config);
     this.subscriptions = new SubscriptionService(this.apiClient, this.config);
     this.transactions = new TransactionService(this.apiClient, this.config);
+    this.tokenization = new TokenizationService(this.apiClient, this.config);
   }
 
   /**
@@ -88,14 +91,11 @@ export class IQProClient {
    * @param gatewayId - Gateway ID to use for API calls
    */
   setGatewayContext(gatewayId: string): void {
-    const gatewayContext: GatewayContext = {
-      gatewayId
-    };
-
     // Set context for all service modules
     this.customers.setGatewayContext(gatewayId);
     this.subscriptions.setGatewayContext(gatewayId);
     this.transactions.setGatewayContext(gatewayId);
+    this.tokenization.setGatewayContext(gatewayId);
   }
 
   /**
@@ -105,6 +105,7 @@ export class IQProClient {
     this.customers.clearGatewayContext();
     this.subscriptions.clearGatewayContext();
     this.transactions.clearGatewayContext();
+    this.tokenization.clearGatewayContext();
   }
 
   /**

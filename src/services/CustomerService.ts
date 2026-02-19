@@ -266,6 +266,27 @@ export class CustomerService extends BaseService {
   }
 
   /**
+   * List all payment methods for a customer
+   * 
+   * ⚠️ NOTE: As of February 2026, the API returns HTTP 405 for this endpoint.
+   * Payment methods are already included in the Customer object from get().
+   * Use customer.paymentMethods instead of calling this method.
+   * 
+   * @deprecated Use customer.paymentMethods from get() response instead
+   * @param customerId - Customer ID
+   * @returns Promise resolving to array of customer payment methods
+   */
+  async listPaymentMethods(customerId: string): Promise<CustomerPaymentMethod[]> {
+    this.validateUUID(customerId, 'Customer ID');
+    
+    const response = await this.apiClient.get<{ statusCode: string; statusDetails: string[]; data: CustomerPaymentMethod[] }>(
+      this.buildPath(`/customer/${customerId}/payment`)
+    );
+
+    return this.handleApiResponse(response);
+  }
+
+  /**
    * Generate a payable token for the customer
    * 
    * @param customerId - Customer ID

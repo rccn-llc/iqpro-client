@@ -144,7 +144,8 @@ class ResourceTracker {
     Logger.section('Resource Cleanup');
 
     // Clean up payment methods first
-    for (const [customerId, paymentMethodIds] of this.paymentMethods) {
+    for (const entry of Array.from(this.paymentMethods.entries())) {
+      const [customerId, paymentMethodIds] = entry;
       for (const paymentMethodId of paymentMethodIds) {
         try {
           await client.customers.deletePaymentMethod(customerId, paymentMethodId);
@@ -156,7 +157,8 @@ class ResourceTracker {
     }
 
     // Clean up addresses (but only non-physical ones to avoid API conflicts)
-    for (const [customerId, addressIds] of this.addresses) {
+    for (const entry of Array.from(this.addresses.entries())) {
+      const [customerId, addressIds] = entry;
       for (const addressId of addressIds) {
         try {
           await client.customers.deleteAddress(customerId, addressId);
@@ -626,7 +628,7 @@ async function runCustomerManagementDemo(): Promise<void> {
     // Note: Payment method management requires tokenized payment data
     // which is beyond the scope of this basic demonstration
 
-    Logger.demo('All available CustomerService flows completed successfully! 🎉');
+    Logger.demo('All available CustomerService flows completed successfully! [SUCCESS]');
 
   } catch (error) {
     Logger.error('Demo failed with error:', error);

@@ -15,7 +15,7 @@
  * - Valid iQ Pro+ API credentials (configured in .env)
  * - Gateway configured and active
  * 
- * Status: ✅ PRODUCTION-READY DEMONSTRATION
+ * Status: [OK] PRODUCTION-READY DEMONSTRATION
  * - Creates customer dynamically (no hardcoded IDs)
  * - Shows complete subscription structure and validation  
  * - Demonstrates API limitations (payment method tokenization)
@@ -81,7 +81,7 @@ const demoEntities: DemoEntities = {};
  * Main demonstration function - now completely self-contained!
  */
 async function demonstrateSubscriptionManagement() {
-  console.log('🚀 Starting iQ Pro+ Subscription Management Demo\n');
+  console.log('[START] Starting iQ Pro+ Subscription Management Demo\n');
 
   // Initialize client
   const client = new IQProClient(config);
@@ -90,57 +90,57 @@ async function demonstrateSubscriptionManagement() {
   client.customers.setGatewayContext(GATEWAY_ID);
   client.subscriptions.setGatewayContext(GATEWAY_ID);
   
-  console.log('✅ Client initialized and gateway context set\n');
+  console.log('[OK] Client initialized and gateway context set\n');
 
   try {
     // 1. Create demo entities (customer + payment method)
-    console.log('🏗️  1. Creating Demo Entities');
+    console.log('[BUILD]  1. Creating Demo Entities');
     console.log('=' .repeat(50));
     await createDemoEntities(client);
     console.log();
 
     // 2. Demonstrate search and listing operations
-    console.log('🔍 2. Subscription Search and Listing Operations');
+    console.log('[SEARCH] 2. Subscription Search and Listing Operations');
     console.log('=' .repeat(50));
     await demonstrateSubscriptionSearch(client);
     console.log();
 
     // 3. Demonstrate convenience methods
-    console.log('🛠️  3. Convenience Methods');
+    console.log('[TOOLS]  3. Convenience Methods');
     console.log('=' .repeat(50));
     await demonstrateConvenienceMethods(client);
     console.log();
 
     // 4. Error handling examples
-    console.log('⚠️  4. Error Handling Examples');
+    console.log('[WARNING]  4. Error Handling Examples');
     console.log('=' .repeat(50));
     await demonstrateErrorHandling(client);
     console.log();
 
     // 5. Full subscription lifecycle with real entities
-    console.log('📝 5. Complete Subscription Lifecycle (Real Entities)');
+    console.log('[NOTE] 5. Complete Subscription Lifecycle (Real Entities)');
     console.log('=' .repeat(50));
-    console.log('✅ Using dynamically created customer and payment method\n');
+    console.log('[OK] Using dynamically created customer and payment method\n');
     await demonstrateFullSubscriptionLifecycle(client);
     console.log();
 
   } catch (error) {
-    console.error('❌ Demo failed:', error);
+    console.error('[FAIL] Demo failed:', error);
     throw error;
   } finally {
     // Always clean up entities
-    console.log('🧹 Cleanup: Removing Demo Entities');
+    console.log('[CLEANUP] Cleanup: Removing Demo Entities');
     console.log('=' .repeat(50));
     await cleanupDemoEntities(client);
   }
 
-  console.log('🎉 Subscription Management Demo completed successfully!');
-  console.log('   ✅ Customer entity management working correctly');  
-  console.log('   ✅ Subscription API structure and validation demonstrated');
-  console.log('   ✅ Search and convenience methods fully functional');
-  console.log('   ✅ Error handling and business logic validated');
-  console.log('   💡 Payment method tokenization is the only integration requirement');
-  console.log('   📋 Complete production integration guidance provided');
+  console.log('[SUCCESS] Subscription Management Demo completed successfully!');
+  console.log('   [OK] Customer entity management working correctly');  
+  console.log('   [OK] Subscription API structure and validation demonstrated');
+  console.log('   [OK] Search and convenience methods fully functional');
+  console.log('   [OK] Error handling and business logic validated');
+  console.log('   [TIP] Payment method tokenization is the only integration requirement');
+  console.log('   [LIST] Complete production integration guidance provided');
 }
 
 /**
@@ -165,13 +165,13 @@ async function createDemoEntities(client: IQProClient): Promise<void> {
   };
   
   demoEntities.customer = await client.customers.create(customerData);
-  console.log(`  ✅ Customer created: ${demoEntities.customer.customerId}`);
+  console.log(`  [OK] Customer created: ${demoEntities.customer.customerId}`);
   console.log(`     Name: ${demoEntities.customer.name || 'N/A'}`);
   console.log(`     Description: ${demoEntities.customer.description || 'N/A'}`);
   console.log(`     Reference ID: ${demoEntities.customer.referenceId || 'N/A'}`);
   console.log(`     Addresses: ${demoEntities.customer.addresses?.length || 0}`);
   
-  console.log('💡 Payment method creation requires tokenized data from payment processor');
+  console.log('[TIP] Payment method creation requires tokenized data from payment processor');
   console.log('   Subscription demo will show API structure and validation');
 }
 
@@ -183,12 +183,12 @@ async function cleanupDemoEntities(client: IQProClient): Promise<void> {
     if (demoEntities.customer) {
       console.log('Deleting demo customer...');
       await client.customers.delete(demoEntities.customer.customerId);
-      console.log('  ✅ Customer deleted');
+      console.log('  [OK] Customer deleted');
     }
     
     console.log('All demo entities cleaned up successfully');
   } catch (error) {
-    console.log(`  ⚠️  Cleanup completed with note: ${error instanceof Error ? error.message : 'Cleanup finished'}`);
+    console.log(`  [WARNING]  Cleanup completed with note: ${error instanceof Error ? error.message : 'Cleanup finished'}`);
   }
 }
 
@@ -269,7 +269,7 @@ async function createMonthlySubscription(client: IQProClient): Promise<Subscript
   };
 
   const subscription = await client.subscriptions.create(subscriptionData);
-  console.log(`  ✅ Monthly subscription created: ${subscription.subscriptionId}`);
+  console.log(`  [OK] Monthly subscription created: ${subscription.subscriptionId}`);
   console.log(`     Name: ${subscription.name}`);
   console.log(`     Status: ${subscription.status.name}`);
   console.log(`     Total: $${(subscription.remit.totalAmount / 100).toFixed(2)}`);
@@ -382,7 +382,7 @@ async function createAnnualSubscription(client: IQProClient): Promise<Subscripti
   };
 
   const subscription = await client.subscriptions.create(subscriptionData);
-  console.log(`  ✅ Annual subscription created: ${subscription.subscriptionId}`);
+  console.log(`  [OK] Annual subscription created: ${subscription.subscriptionId}`);
   console.log(`     Name: ${subscription.name}`);
   console.log(`     Trial Days: ${subscription.recurrence.trialLengthInDays}`);
   console.log(`     Total: $${(subscription.remit.totalAmount / 100).toFixed(2)}`);
@@ -445,7 +445,7 @@ async function createComplexScheduleSubscription(client: IQProClient): Promise<S
   };
 
   const subscription = await client.subscriptions.create(subscriptionData);
-  console.log(`  ✅ Complex schedule subscription created: ${subscription.subscriptionId}`);
+  console.log(`  [OK] Complex schedule subscription created: ${subscription.subscriptionId}`);
   console.log(`     Name: ${subscription.name}`);
   console.log(`     Schedule: ${subscription.recurrence.schedule.name || 'Bi-weekly Tuesdays'}`);
   console.log(`     Total: $${(subscription.remit.totalAmount / 100).toFixed(2)}`);
@@ -461,19 +461,19 @@ async function retrieveSubscriptionDetails(client: IQProClient, subscriptionId: 
   
   const subscription = await client.subscriptions.get(subscriptionId);
   
-  console.log('  📄 Subscription Details:');
+  console.log('  [NOTE] Subscription Details:');
   console.log(`     ID: ${subscription.subscriptionId}`);
   console.log(`     Name: ${subscription.name}`);
   console.log(`     Number: ${subscription.number || 'Auto-generated'}`);
   console.log(`     Status: ${subscription.status.name} (ID: ${subscription.status.subscriptionStatusId})`);
   console.log(`     Customer: ${subscription.customer.name} (${subscription.customer.customerId})`);
   
-  console.log('  💰 Financial Details:');
+  console.log('  [FINANCE] Financial Details:');
   console.log(`     Base Amount: $${(subscription.remit.baseAmount / 100).toFixed(2)}`);
   console.log(`     Tax Amount: $${(subscription.remit.taxAmount / 100).toFixed(2)}`);
   console.log(`     Total Amount: $${(subscription.remit.totalAmount / 100).toFixed(2)}`);
   
-  console.log('  📅 Recurrence Details:');
+  console.log('  [SCHEDULE] Recurrence Details:');
   console.log(`     Start Date: ${new Date(subscription.recurrence.termStartDate).toLocaleDateString()}`);
   console.log(`     Billing Start: ${new Date(subscription.recurrence.billingStartDate).toLocaleDateString()}`);
   console.log(`     Auto Renewed: ${subscription.recurrence.isAutoRenewed ? 'Yes' : 'No'}`);
@@ -481,7 +481,7 @@ async function retrieveSubscriptionDetails(client: IQProClient, subscriptionId: 
   console.log(`     Trial Days: ${subscription.recurrence.trialLengthInDays}`);
   console.log(`     Invoices Remaining: ${subscription.recurrence.invoicesRemaining}`);
   
-  console.log('  💳 Payment Method:');
+  console.log('  [PAYMENT] Payment Method:');
   const pm = subscription.paymentMethod;
   console.log(`     Auto Charged: ${pm.isAutoCharged ? 'Yes' : 'No'}`);
   if (pm.customerPaymentMethod?.card) {
@@ -489,14 +489,14 @@ async function retrieveSubscriptionDetails(client: IQProClient, subscriptionId: 
     console.log(`     Expires: ${pm.customerPaymentMethod.card.expirationDate}`);
   }
   
-  console.log('  📦 Line Items:');
+  console.log('  [ITEMS] Line Items:');
   subscription.lineItems?.forEach((item, index) => {
     console.log(`     ${index + 1}. ${item.name} - ${item.description}`);
     console.log(`        Qty: ${item.quantity} x $${(item.unitPrice / 100).toFixed(2)} = $${(item.quantity * item.unitPrice / 100).toFixed(2)}`);
   });
   
   if (subscription.addresses?.length) {
-    console.log('  📍 Addresses:');
+    console.log('  [ADDRESS] Addresses:');
     subscription.addresses.forEach((addr, index) => {
       const types = [];
       if (addr.isBilling) types.push('Billing');
@@ -539,7 +539,7 @@ async function updateSubscriptionProperties(client: IQProClient, subscriptionId:
   };
   
   let updatedSubscription = await client.subscriptions.update(subscriptionId, basicUpdate);
-  console.log(`  ✅ Basic properties updated: ${updatedSubscription.name}`);
+  console.log(`  [OK] Basic properties updated: ${updatedSubscription.name}`);
   
   // Update payment method settings
   const paymentUpdate: UpdateSubscriptionRequest = {
@@ -549,7 +549,7 @@ async function updateSubscriptionProperties(client: IQProClient, subscriptionId:
   };
   
   updatedSubscription = await client.subscriptions.update(subscriptionId, paymentUpdate);
-  console.log(`  ✅ Payment method updated: Auto-charge disabled`);
+  console.log(`  [OK] Payment method updated: Auto-charge disabled`);
   
   // Update line items
   const lineItemUpdate: UpdateSubscriptionRequest = {
@@ -560,7 +560,7 @@ async function updateSubscriptionProperties(client: IQProClient, subscriptionId:
         quantity: 1,
         unitPrice: 3499, // $34.99 - price increase
         unitOfMeasureId: 1,
-        productId: PRODUCT_ID,
+        productId: null, // Set to null for demo - use real product ID in production
         localTaxPercent: 8.5
       },
       {
@@ -575,7 +575,7 @@ async function updateSubscriptionProperties(client: IQProClient, subscriptionId:
   };
   
   updatedSubscription = await client.subscriptions.update(subscriptionId, lineItemUpdate);
-  console.log(`  ✅ Line items updated: ${updatedSubscription.lineItems?.length} items`);
+  console.log(`  [OK] Line items updated: ${updatedSubscription.lineItems?.length} items`);
   console.log(`     New total: $${(updatedSubscription.remit.totalAmount / 100).toFixed(2)}`);
   
   // Update recurrence schedule
@@ -592,7 +592,7 @@ async function updateSubscriptionProperties(client: IQProClient, subscriptionId:
   };
   
   updatedSubscription = await client.subscriptions.update(subscriptionId, scheduleUpdate);
-  console.log(`  ✅ Recurrence schedule updated: Billing on 15th at noon`);
+  console.log(`  [OK] Recurrence schedule updated: Billing on 15th at noon`);
 }
 
 /**
@@ -603,33 +603,33 @@ async function demonstrateSubscriptionSearch(client: IQProClient) {
   
   try {
     // 1. List all subscriptions (empty search)
-    console.log('  🔍 Searching all subscriptions...');
+    console.log('  [SEARCH] Searching all subscriptions...');
     const allSubscriptions = await client.subscriptions.search({});
-    console.log(`     ✅ Search completed: Found ${allSubscriptions.length} subscriptions total`);
+    console.log(`     [OK] Search completed: Found ${allSubscriptions.length} subscriptions total`);
     
     // 2. Search with pagination
-    console.log('  🔍 Paginated search...');
+    console.log('  [SEARCH] Paginated search...');
     const paginatedResults = await client.subscriptions.search({
       offset: 0,
       limit: 10,
       sortColumn: 'createdDateTime',
       sortDirection: 'desc'
     });
-    console.log(`     ✅ Paginated search: Retrieved ${paginatedResults.length} subscriptions (limit: 10)`);
+    console.log(`     [OK] Paginated search: Retrieved ${paginatedResults.length} subscriptions (limit: 10)`);
     
     // 3. Search by status (if any subscriptions exist)
     if (allSubscriptions.length > 0) {
-      console.log('  🔍 Searching by active status...');
+      console.log('  [SEARCH] Searching by active status...');
       const activeSubscriptions = await client.subscriptions.search({
         statusName: {
           operator: 'IsLike',
           value: 'Active'
         }
       });
-      console.log(`     ✅ Status search: Found ${activeSubscriptions.length} active subscriptions`);
+      console.log(`     [OK] Status search: Found ${activeSubscriptions.length} active subscriptions`);
       
       // Display sample results
-      console.log('  📄 Sample subscription data:');
+      console.log('  [NOTE] Sample subscription data:');
       const sample = allSubscriptions[0];
       console.log(`     ID: ${sample.subscriptionId}`);
       console.log(`     Name: ${sample.name}`);
@@ -638,12 +638,12 @@ async function demonstrateSubscriptionSearch(client: IQProClient) {
       console.log(`     Total: $${(sample.remit.totalAmount / 100).toFixed(2)}`);
       console.log(`     Created: ${new Date(sample.createdDateTime).toLocaleDateString()}`);
     } else {
-      console.log('  ℹ️  No existing subscriptions found in gateway');
+      console.log('  [INFO]  No existing subscriptions found in gateway');
       console.log('     This is expected for a new/empty gateway');
     }
     
   } catch (error) {
-    console.log(`     ✅ Search API test completed`);
+    console.log(`     [OK] Search API test completed`);
     if (error instanceof Error) {
       console.log(`        Note: ${error.message.substring(0, 80)}...`);
     }
@@ -658,32 +658,32 @@ async function demonstrateLifecycleManagement(client: IQProClient, subscriptionI
   
   try {
     // 1. Pause subscription
-    console.log('  ⏸️  Pausing subscription...');
+    console.log('  [PAUSE]  Pausing subscription...');
     const pausedSubscription = await client.subscriptions.pause(subscriptionId);
-    console.log(`     ✅ Subscription paused: ${pausedSubscription.status.name}`);
+    console.log(`     [OK] Subscription paused: ${pausedSubscription.status.name}`);
     
     // Wait a moment to demonstrate state
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // 2. Resume subscription with proration
-    console.log('  ▶️  Resuming subscription with proration...');
+    console.log('  [PLAY]  Resuming subscription with proration...');
     const resumeRequest: ResumeSubscriptionRequest = {
       prorateRemainingDays: true
     };
     const resumedSubscription = await client.subscriptions.resume(subscriptionId, resumeRequest);
-    console.log(`     ✅ Subscription resumed: ${resumedSubscription.status.name}`);
+    console.log(`     [OK] Subscription resumed: ${resumedSubscription.status.name}`);
     console.log(`     Proration applied for partial period`);
     
     // 3. Demonstrate different resume options
-    console.log('  ▶️  Resuming without proration (for demo)...');
+    console.log('  [PLAY]  Resuming without proration (for demo)...');
     const noProrateRequest: ResumeSubscriptionRequest = {
       prorateRemainingDays: false
     };
     await client.subscriptions.resume(subscriptionId, noProrateRequest);
-    console.log(`     ✅ Subscription resumed without proration`);
+    console.log(`     [OK] Subscription resumed without proration`);
     
   } catch (error) {
-    console.log(`     ⚠️  Lifecycle operation completed with note: ${error instanceof Error ? error.message : 'Operation completed'}`);
+    console.log(`     [WARNING]  Lifecycle operation completed with note: ${error instanceof Error ? error.message : 'Operation completed'}`);
   }
 }
 
@@ -695,23 +695,23 @@ async function demonstrateConvenienceMethods(client: IQProClient) {
   
   try {
     // 1. List subscriptions with default pagination
-    console.log('  📋 Listing subscriptions (default pagination)...');
+    console.log('  [LIST] Listing subscriptions (default pagination)...');
     const defaultList = await client.subscriptions.list();
-    console.log(`     ✅ Retrieved ${defaultList.length} subscriptions (default: 50 limit)`);
+    console.log(`     [OK] Retrieved ${defaultList.length} subscriptions (default: 50 limit)`);
     
     // 2. List with custom pagination
-    console.log('  📋 Listing subscriptions (custom pagination)...');
+    console.log('  [LIST] Listing subscriptions (custom pagination)...');
     const customList = await client.subscriptions.list(5, 0); // 5 items, offset 0
-    console.log(`     ✅ Retrieved ${customList.length} subscriptions (limit: 5)`);
+    console.log(`     [OK] Retrieved ${customList.length} subscriptions (limit: 5)`);
     
     // 3. Test search by status (safe operation)
-    console.log('  📊 Testing search by status...');
+    console.log('  [STATS] Testing search by status...');
     const activeSubscriptions = await client.subscriptions.getByStatus('Active');
-    console.log(`     ✅ Found ${activeSubscriptions.length} active subscriptions`);
+    console.log(`     [OK] Found ${activeSubscriptions.length} active subscriptions`);
     
     // 4. Display summary if subscriptions exist
     if (defaultList.length > 0) {
-      console.log('  📄 Subscription summary:');
+      console.log('  [NOTE] Subscription summary:');
       defaultList.slice(0, 3).forEach((sub, index) => {
         console.log(`     ${index + 1}. ${sub.name} - ${sub.status.name} - $${(sub.remit.totalAmount / 100).toFixed(2)}`);
       });
@@ -721,7 +721,7 @@ async function demonstrateConvenienceMethods(client: IQProClient) {
     }
     
   } catch (error) {
-    console.log(`     ✅ Convenience methods test completed`);
+    console.log(`     [OK] Convenience methods test completed`);
     if (error instanceof Error) {
       console.log(`        Note: ${error.message.substring(0, 80)}...`);
     }
@@ -736,7 +736,7 @@ async function demonstrateAdvancedScenarios(client: IQProClient, subscriptionId:
   
   try {
     // 1. Complex updates with multiple properties
-    console.log('  🔧 Complex multi-property update...');
+    console.log('  [TOOLS] Complex multi-property update...');
     const complexUpdate: UpdateSubscriptionRequest = {
       name: 'Advanced Enterprise Plan',
       note: 'Upgraded to advanced tier with additional features',
@@ -803,20 +803,20 @@ async function demonstrateAdvancedScenarios(client: IQProClient, subscriptionId:
     };
     
     const advancedSubscription = await client.subscriptions.update(subscriptionId, complexUpdate);
-    console.log(`     ✅ Complex update completed: ${advancedSubscription.name}`);
+    console.log(`     [OK] Complex update completed: ${advancedSubscription.name}`);
     console.log(`     New total: $${(advancedSubscription.remit.totalAmount / 100).toFixed(2)}`);
     console.log(`     Line items: ${advancedSubscription.lineItems?.length}`);
     console.log(`     Addresses: ${advancedSubscription.addresses?.length}`);
     
     // 2. Advanced search scenarios
-    console.log('  🔍 Advanced search scenarios...');
+    console.log('  [SEARCH] Advanced search scenarios...');
     
     // Search for high-value subscriptions
     const highValueSearch: SubscriptionSearchRequest = {
       globalSearch: null, // Clear global search
       customerId: {
         operator: 'Equal',
-        value: CUSTOMER_ID
+        value: demoEntities.customer!.customerId
       },
       sortColumn: 'totalAmount',
       sortDirection: 'desc',
@@ -826,19 +826,11 @@ async function demonstrateAdvancedScenarios(client: IQProClient, subscriptionId:
     const highValueSubs = await client.subscriptions.search(highValueSearch);
     console.log(`     Found ${highValueSubs.length} subscriptions sorted by value`);
     
-    // Search by product ID
-    const productSearch: SubscriptionSearchRequest = {
-      productId: {
-        operator: 'Equal',
-        value: PRODUCT_ID
-      }
-    };
-    
-    const productSubs = await client.subscriptions.search(productSearch);
-    console.log(`     Found ${productSubs.length} subscriptions for product ${PRODUCT_ID}`);
+    // Search by product ID (skipped in demo since we use null product IDs)
+    console.log('     [SKIP] Product search skipped (demo uses null product IDs)');
     
     // 3. Schedule analysis
-    console.log('  📅 Schedule analysis...');
+    console.log('  [SCHEDULE] Schedule analysis...');
     const subscription = await client.subscriptions.get(subscriptionId);
     console.log(`     Current billing schedule:`);
     console.log(`       Start: ${new Date(subscription.recurrence.termStartDate).toLocaleDateString()}`);
@@ -861,7 +853,7 @@ async function demonstrateAdvancedScenarios(client: IQProClient, subscriptionId:
     }
     
   } catch (error) {
-    console.log(`     ⚠️  Advanced scenario completed with note: ${error instanceof Error ? error.message : 'Operation completed'}`);
+    console.log(`     [WARNING]  Advanced scenario completed with note: ${error instanceof Error ? error.message : 'Operation completed'}`);
   }
 }
 
@@ -872,16 +864,16 @@ async function demonstrateErrorHandling(client: IQProClient) {
   console.log('Demonstrating error handling...');
   
   // 1. Try to get non-existent subscription
-  console.log('  ❌ Testing invalid subscription ID...');
+  console.log('  [FAIL] Testing invalid subscription ID...');
   try {
     await client.subscriptions.get('00000000-0000-0000-0000-000000000000');
     console.log('     Unexpected: No error thrown');
   } catch (error) {
-    console.log(`     ✅ Caught expected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.log(`     [OK] Caught expected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
   
   // 2. Try to create subscription with invalid data
-  console.log('  ❌ Testing invalid subscription creation...');
+  console.log('  [FAIL] Testing invalid subscription creation...');
   try {
     const invalidData = {
       customerId: 'invalid-uuid',
@@ -902,22 +894,22 @@ async function demonstrateErrorHandling(client: IQProClient) {
     await client.subscriptions.create(invalidData);
     console.log('     Unexpected: No validation error thrown');
   } catch (error) {
-    console.log(`     ✅ Caught validation error: ${error instanceof Error ? error.message.substring(0, 100) : 'Validation failed'}...`);
+    console.log(`     [OK] Caught validation error: ${error instanceof Error ? error.message.substring(0, 100) : 'Validation failed'}...`);
   }
   
   // 3. Try to update non-existent subscription
-  console.log('  ❌ Testing update of non-existent subscription...');
+  console.log('  [FAIL] Testing update of non-existent subscription...');
   try {
     await client.subscriptions.update('00000000-0000-0000-0000-000000000000', {
       name: 'Updated Name'
     });
     console.log('     Unexpected: No error thrown');
   } catch (error) {
-    console.log(`     ✅ Caught expected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.log(`     [OK] Caught expected error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
   
   // 4. Try invalid search parameters
-  console.log('  ❌ Testing invalid search parameters...');
+  console.log('  [FAIL] Testing invalid search parameters...');
   try {
     const invalidSearch = {
       offset: -1, // Invalid offset
@@ -931,18 +923,18 @@ async function demonstrateErrorHandling(client: IQProClient) {
     await client.subscriptions.search(invalidSearch);
     console.log('     Unexpected: No validation error thrown');
   } catch (error) {
-    console.log(`     ✅ Caught validation error: ${error instanceof Error ? error.message.substring(0, 100) : 'Validation failed'}...`);
+    console.log(`     [OK] Caught validation error: ${error instanceof Error ? error.message.substring(0, 100) : 'Validation failed'}...`);
   }
   
   // 5. Test gateway context requirement
-  console.log('  ❌ Testing missing gateway context...');
+  console.log('  [FAIL] Testing missing gateway context...');
   try {
     const clientWithoutContext = new IQProClient(config);
     // Don't set gateway context
     await clientWithoutContext.subscriptions.list();
     console.log('     Unexpected: No context error thrown');
   } catch (error) {
-    console.log(`     ✅ Caught context error: ${error instanceof Error ? error.message : 'Context required'}`);
+    console.log(`     [OK] Caught context error: ${error instanceof Error ? error.message : 'Context required'}`);
   }
 }
 
@@ -963,7 +955,7 @@ async function demonstrateFullSubscriptionLifecycle(client: IQProClient) {
  * Show complete subscription request structure
  */
 async function demonstrateSubscriptionStructure() {
-  console.log('📋 Complete Subscription Request Structure:');
+  console.log('[LIST] Complete Subscription Request Structure:');
   
   if (!demoEntities.customer) {
     throw new Error('Customer not created - call createDemoEntities() first');
@@ -1029,20 +1021,20 @@ async function demonstrateSubscriptionStructure() {
     ]
   };
   
-  console.log('  ✅ Request validates all required fields');
-  console.log('  ✅ Customer ID references real customer:', subscriptionStructure.customerId);
-  console.log('  ✅ All API validation requirements met');
-  console.log('  ✅ Recurrence schedule properly formatted');
-  console.log('  ✅ Line items include required pricing');
-  console.log('  ✅ Billing address properly structured');
-  console.log('  ❌ Payment method requires tokenization (sandbox limitation)');
+  console.log('  [OK] Request validates all required fields');
+  console.log('  [OK] Customer ID references real customer:', subscriptionStructure.customerId);
+  console.log('  [OK] All API validation requirements met');
+  console.log('  [OK] Recurrence schedule properly formatted');
+  console.log('  [OK] Line items include required pricing');
+  console.log('  [OK] Billing address properly structured');
+  console.log('  [FAIL] Payment method requires tokenization (sandbox limitation)');
 }
 
 /**
  * Attempt subscription creation with graceful error handling
  */
 async function attemptSubscriptionCreation(client: IQProClient) {
-  console.log('\\n🧪 Testing Subscription Creation API:');
+  console.log('\\n[TEST] Testing Subscription Creation API:');
   
   if (!demoEntities.customer) {
     throw new Error('Customer not created');
@@ -1110,7 +1102,7 @@ async function attemptSubscriptionCreation(client: IQProClient) {
   
   try {
     const subscription = await client.subscriptions.create(subscriptionData);
-    console.log('  🎉 Subscription created successfully!');
+    console.log('  [SUCCESS] Subscription created successfully!');
     console.log(`     ID: ${subscription.subscriptionId}`);
     console.log(`     Status: ${subscription.status.name}`);
     
@@ -1123,20 +1115,20 @@ async function attemptSubscriptionCreation(client: IQProClient) {
       const errorMsg = error.message.toLowerCase();
       
       if (errorMsg.includes('payment') && (errorMsg.includes('not found') || errorMsg.includes('invalid'))) {
-        console.log('  ✅ Expected API Response: Payment method validation');
+        console.log('  [OK] Expected API Response: Payment method validation');
         console.log('     The API correctly validates payment method requirements');
-        console.log('     💡 In production: Use tokenized payment methods from payment processor');
+        console.log('     [TIP] In production: Use tokenized payment methods from payment processor');
         
       } else if (errorMsg.includes('customer') && errorMsg.includes('not found')) {
-        console.log('  ❌ Unexpected: Customer validation failed');
+        console.log('  [FAIL] Unexpected: Customer validation failed');
         console.log(`     Error: ${errorMsg}`);
         
       } else {
-        console.log('  ✅ API validation test completed');
+        console.log('  [OK] API validation test completed');
         console.log(`     Response: ${errorMsg.substring(0, 100)}...`);
       }
       
-      console.log('\\n  📋 Production Integration Steps:');
+      console.log('\\n  [LIST] Production Integration Steps:');
       console.log('     1. Implement payment tokenization in your frontend');
       console.log('     2. Create customer payment method with tokenized data');
       console.log('     3. Use real payment method ID in subscriptions');
@@ -1163,7 +1155,7 @@ async function cancelSubscription(client: IQProClient, subscriptionId: string) {
     };
     
     const cancelledSubscription = await client.subscriptions.cancel(subscriptionId, cancelRequest);
-    console.log(`  ✅ Subscription cancelled: ${cancelledSubscription.status.name}`);
+    console.log(`  [OK] Subscription cancelled: ${cancelledSubscription.status.name}`);
     console.log(`     Will remain active until end of billing period`);
     
   } catch (error) {
@@ -1178,10 +1170,10 @@ async function cancelSubscription(client: IQProClient, subscriptionId: string) {
       };
       
       const cancelledSubscription = await client.subscriptions.cancel(subscriptionId, immediateCancelRequest);
-      console.log(`  ✅ Subscription cancelled immediately: ${cancelledSubscription.status.name}`);
+      console.log(`  [OK] Subscription cancelled immediately: ${cancelledSubscription.status.name}`);
       
     } catch (finalError) {
-      console.log(`     ⚠️  Cancellation completed with note: ${finalError instanceof Error ? finalError.message : 'Operation completed'}`);
+      console.log(`     [WARNING]  Cancellation completed with note: ${finalError instanceof Error ? finalError.message : 'Operation completed'}`);
     }
   }
 }
@@ -1220,9 +1212,9 @@ function validateEnvironment() {
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
-    console.error('❌ Missing required environment variables:');
+    console.error('[FAIL] Missing required environment variables:');
     missing.forEach(key => console.error(`   - ${key}`));
-    console.error('\n💡 Make sure your .env file is configured correctly');
+    console.error('\n[TIP] Make sure your .env file is configured correctly');
     console.error('   Required variables:');
     console.error('   IQPRO_CLIENT_ID=your-oauth-client-id');
     console.error('   IQPRO_CLIENT_SECRET=your-oauth-client-secret');
@@ -1233,8 +1225,8 @@ function validateEnvironment() {
     process.exit(1);
   }
   
-  console.log('✅ Environment variables validated');
-  console.log('💡 Customer and payment method will be created dynamically');
+  console.log('[OK] Environment variables validated');
+  console.log('[TIP] Customer and payment method will be created dynamically');
 }
 
 // Run the demonstration if this file is executed directly
@@ -1243,11 +1235,11 @@ if (require.main === module) {
   
   demonstrateSubscriptionManagement()
     .then(() => {
-      console.log('\n🎉 Demo completed successfully!');
+      console.log('\n[SUCCESS] Demo completed successfully!');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('\n❌ Demo failed:', error);
+      console.error('\n[FAIL] Demo failed:', error);
       process.exit(1);
     });
 }

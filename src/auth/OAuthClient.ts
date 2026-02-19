@@ -53,7 +53,7 @@ export class OAuthClient {
   /**
    * Build HTTP request options with proper headers and timeout
    */
-  private buildRequestOptions(body: string): RequestInit {
+  private buildRequestOptions(body: string): { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal } {
     return {
       method: 'POST',
       headers: {
@@ -83,7 +83,7 @@ export class OAuthClient {
   /**
    * Make the actual HTTP request to the token endpoint
    */
-  private async makeTokenRequest(options: RequestInit): Promise<Response> {
+  private async makeTokenRequest(options: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }): Promise<Response> {
     const response = await fetch(this.config.oauthUrl, options);
 
     // Check for network-level errors

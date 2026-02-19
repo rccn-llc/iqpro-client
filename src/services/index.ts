@@ -12,6 +12,7 @@ export { BaseService } from './BaseService';
 export { CustomerService } from './CustomerService';
 export { SubscriptionService } from './SubscriptionService';
 export { TransactionService } from './TransactionService';
+export { TokenizationService } from './TokenizationService';
 
 // Default exports for convenience
 export { default as Customer } from './CustomerService';

@@ -27,14 +27,72 @@ export enum TransactionStatus {
 
 /**
  * Transaction type enumeration
+ * Note: API expects numeric values matching C# enum
  */
 export enum TransactionType {
-  SALE = 'sale',
-  AUTHORIZATION = 'authorization',
-  CAPTURE = 'capture',
-  VOID = 'void',
-  REFUND = 'refund',
-  CREDIT = 'credit'
+  SALE = 0,
+  AUTHORIZATION = 1,
+  CAPTURE = 2,
+  VOID = 3,
+  REFUND = 4,
+  CREDIT = 5
+}
+
+/**
+ * Search filter operators for transactions
+ */
+export type TransactionSearchOperator = 'Equal' | 'NotEqual' | 'In' | 'NotIn' | 'GreaterThan' | 'LessThan' | 'GreaterThanOrEqual' | 'LessThanOrEqual' | 'Contains' | 'StartsWith' | 'EndsWith';
+
+/**
+ * Search filter for GUID/UUID fields
+ */
+export interface SearchFilterGuid {
+  operator: 'Equal' | 'NotEqual' | 'In' | 'NotIn';
+  value: string | string[];
+}
+
+/**
+ * Search filter for enum fields
+ */
+export interface SearchFilterEnum {
+  operator: 'Equal' | 'NotEqual' | 'In' | 'NotIn';
+  value: string | string[];
+}
+
+/**
+ * Search filter for numeric fields
+ */
+export interface SearchFilterNumber {
+  operator: 'Equal' | 'NotEqual' | 'GreaterThan' | 'LessThan' | 'GreaterThanOrEqual' | 'LessThanOrEqual' | 'In' | 'NotIn';
+  value: number | number[];
+}
+
+/**
+ * Search filter for date fields
+ */
+export interface SearchFilterDate {
+  operator: 'Equal' | 'NotEqual' | 'GreaterThan' | 'LessThan' | 'GreaterThanOrEqual' | 'LessThanOrEqual';
+  value: string; // ISO 8601 date string
+}
+
+/**
+ * Remit information (billing totals)
+ */
+export interface Remit {
+  /** Total amount in cents */
+  totalAmount: number;
+  
+  /** Tax amount in cents */
+  taxAmount?: number;
+  
+  /** Tip amount in cents */
+  tipAmount?: number;
+  
+  /** Discount amount in cents */
+  discountAmount?: number;
+  
+  /** Shipping amount in cents */
+  shippingAmount?: number;
 }
 
 /**
@@ -245,6 +303,7 @@ export interface Transaction {
 
 /**
  * Request to create a new transaction
+ * Note: API expects this wrapped in insertTransaction object
  */
 export interface CreateTransactionRequest {
   /** Transaction amount in cents */
@@ -253,20 +312,74 @@ export interface CreateTransactionRequest {
   /** Currency code (ISO 4217) */
   currency: string;
   
-  /** Transaction type (defaults to 'sale') */
+  /** Transaction type (defaults to SALE = 0) */
   type?: TransactionType;
   
   /** Customer ID */
   customerId: string;
   
-  /** Payment method details */
-  paymentMethod: {
-    /** Payment method type */
-    type: PaymentMethodType;
+  /** Remit information (billing totals) - REQUIRED by API */
+  Remit: Remit;
+  
+  /**
+   * Payment method details
+   * 
+   * ✅ RECOMMENDED: Reference a saved customer payment method
+   * Use the customer reference approach for production (PCI compliant):
+   * ```typescript
+   * paymentMethod: {
+   *   customer: {
+   *     customerId: 'cust-123',
+   *     customerPaymentMethodId: 'pm-456' // optional - uses default if omitted
+   *   }
+   * }
+   * ```
+   * 
+   * ⚠️ TESTING ONLY: Inline payment data (may not work in all environments)
+   * Some sandbox environments may accept inline payment data:
+   * ```typescript
+   * paymentMethod: {
+   *   type: PaymentMethodType.CREDIT_CARD,
+   *   card: { number: '4242...', expMonth: 12, expYear: 2025, cvv: '123' }
+   * }
+   * ```
+   * 
+   * Production applications MUST:
+   * 1. Tokenize payment data via TokenizationService
+   * 2. Save to customer via CustomerService.createPaymentMethod()
+   * 3. Reference saved payment method in transactions
+   */
+  paymentMethod?: {
+    /**
+     * ✅ RECOMMENDED: Reference to customer's saved payment method
+     * API will use the specified payment method, or customer's default if omitted
+     */
+    customer?: {
+      /** Customer ID (required) */
+      customerId: string;
+      
+      /** Specific payment method ID (optional - uses default if not specified) */
+      customerPaymentMethodId?: string;
+      
+      /** Billing address ID (optional) */
+      customerBillingAddressId?: string;
+      
+      /** Shipping address ID (optional) */
+      customerShippingAddressId?: string;
+    };
     
-    /** Card information (required for card payments) */
+    /**
+     * ⚠️ TESTING ONLY: Payment method type (for inline payment data)
+     * Only used with inline card/bankAccount/walletToken data
+     */
+    type?: PaymentMethodType;
+    
+    /**
+     * ⚠️ TESTING ONLY: Card information (inline, may not work in production)
+     * Prefer saving to customer via createPaymentMethod() first
+     */
     card?: {
-      /** Card number */
+      /** Card number (will be transformed to API format) */
       number: string;
       
       /** Expiration month (1-12) */
@@ -282,7 +395,10 @@ export interface CreateTransactionRequest {
       name?: string;
     };
     
-    /** Bank account information (required for ACH) */
+    /**
+     * ⚠️ TESTING ONLY: Bank account information (inline, may not work in production)
+     * Prefer saving to customer via createPaymentMethod() first
+     */
     bankAccount?: {
       /** Account number */
       accountNumber: string;
@@ -297,7 +413,10 @@ export interface CreateTransactionRequest {
       accountHolderName: string;
     };
     
-    /** Digital wallet token (for wallet payments) */
+    /**
+     * ⚠️ TESTING ONLY: Digital wallet token (inline, may not work in production)
+     * Prefer saving to customer via createPaymentMethod() first
+     */
     walletToken?: string;
   };
   
@@ -326,6 +445,12 @@ export interface CreateTransactionRequest {
     
     /** Company name */
     company?: string;
+    
+    /** Email address */
+    email?: string;
+    
+    /** Phone number */
+    phone?: string;
     
     /** Street address line 1 */
     line1: string;
@@ -356,6 +481,12 @@ export interface CreateTransactionRequest {
     
     /** Company name */
     company?: string;
+    
+    /** Email address */
+    email?: string;
+    
+    /** Phone number */
+    phone?: string;
     
     /** Street address line 1 */
     line1: string;
@@ -443,7 +574,8 @@ export interface IncrementAuthorizationRequest {
 }
 
 /**
- * Transaction search parameters
+ * Transaction search parameters (consumer-facing)
+ * Note: These will be transformed to API format with filter objects
  */
 export interface TransactionSearchParams {
   /** Customer ID */
@@ -495,6 +627,102 @@ export interface TransactionSearchParams {
   };
   
   /** Search in description and metadata */
+  search?: string;
+  
+  /** Page number for pagination */
+  page?: number;
+  
+  /** Number of results per page (max 100) */
+  limit?: number;
+  
+  /** Sort field */
+  sortBy?: 'createdAt' | 'updatedAt' | 'amount' | 'status';
+  
+  /** Sort order */
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Transaction search request (API format with filter objects)
+ * Note: API expects this structure wrapped in transactionSearchRequest
+ */
+export interface TransactionSearchRequest {
+  /** Customer ID filter */
+  customerId?: SearchFilterGuid;
+  
+  /** Transaction status filter (single value) */
+  status?: SearchFilterEnum;
+  
+  /** Transaction statuses filter (multiple values) - API format */
+  transactionStatuses?: {
+    operator: 'Contains';
+    values: string[];
+  };
+  
+  /** Transaction type filter (single value) */
+  type?: SearchFilterEnum;
+  
+  /** Transaction types filter (multiple values) - API format */
+  transactionTypes?: {
+    operator: 'Contains';
+    values: string[];
+  };
+  
+  /** Payment method type filter (single value) - API uses 'paymentMethod' field */
+  paymentMethod?: SearchFilterEnum;
+  
+  /** Payment method types filter (multiple values) - API format */
+  paymentMethodTypes?: {
+    operator: 'Contains';
+    values: string[];
+  };
+  
+  /** Legacy: Payment method type filter */
+  paymentMethodType?: SearchFilterEnum;
+  
+  /** Gateway ID filter */
+  gatewayId?: SearchFilterGuid;
+  
+  /** Order ID filter */
+  orderId?: SearchFilterGuid;
+  
+  /** Invoice ID filter */
+  invoiceId?: SearchFilterGuid;
+  
+  /** Amount filter (API format with Between operator) */
+  amount?: {
+    operator: 'Between' | 'IsGreaterOrEqual' | 'IsLessThanOrEqual';
+    minValue?: number | undefined;
+    maxValue?: number | undefined;
+    value?: number | undefined;
+  };
+  
+  /** Legacy: Minimum amount filter */
+  amountMin?: SearchFilterNumber;
+  
+  /** Legacy: Maximum amount filter */
+  amountMax?: SearchFilterNumber;
+  
+  /** createdDateTime filter (API format with Between operator) */
+  createdDateTime?: {
+    operator: 'Between';
+    startDate: string | null;
+    endDate: string | null;
+  };
+  
+  /** Legacy: Start date filter */
+  startDate?: SearchFilterDate;
+  
+  /** Legacy: End date filter */
+  endDate?: SearchFilterDate;
+  
+  /** Legacy: Created start date filter */
+  createdStartDate?: SearchFilterDate;
+  
+  /** Legacy: Created end date filter */
+  createdEndDate?: SearchFilterDate;
+  
+  /** Search query */
   search?: string;
   
   /** Page number for pagination */

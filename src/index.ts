@@ -33,7 +33,8 @@ export {
   BaseService,
   CustomerService,
   SubscriptionService,
-  TransactionService
+  TransactionService,
+  TokenizationService
 } from './services';
 
 // Authentication components
